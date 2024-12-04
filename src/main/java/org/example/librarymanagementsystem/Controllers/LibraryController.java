@@ -12,6 +12,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.example.librarymanagementsystem.Models.Book;
 import org.example.librarymanagementsystem.HelloApplication;
+import org.example.librarymanagementsystem.dao.BookDAO;
 import org.example.librarymanagementsystem.dao.DatabaseConnection;
 
 import java.io.IOException;
@@ -20,7 +21,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+
 public class LibraryController {
+    private BookDAO bookDAO = new BookDAO();
 
     @FXML
     private GridPane booksContainer;
@@ -158,16 +161,29 @@ public class LibraryController {
 
     // Метод поиска
     private void onSearch() {
-        String searchText = searchField.getText().trim();
-        if (searchText.isEmpty()) {
-            displayDefaultContent(); // Вернуть содержимое по умолчанию
+        String query = searchField.getText().trim();
+        if (query.isEmpty()) {
+            System.out.println("Поле поиска пустое. Показать дефолтное содержимое.");
+            displayDefaultContent();
             return;
         }
-        Book foundBook = searchBookByName(searchText);
-        if (foundBook != null) {
-            displaySearchResult(foundBook);
-        } else {
-            displayNoResult();
+
+        System.out.println("Выполняется поиск книги с запросом: " + query);
+
+        try {
+            Book result = bookDAO.searchBookByName(query);
+            if (result != null) {
+                System.out.println("Книга найдена: " + result.getName());
+                booksGrid.setVisible(false); // Скрываем GridPane с популярными книгами
+                displaySearchResult(result); // Показываем результаты поиска
+            } else {
+                System.out.println("Книга не найдена.");
+                booksGrid.setVisible(false);
+                displayNoResult(); // Показываем сообщение "Книга не найдена"
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Ошибка при выполнении поиска: " + e.getMessage());
         }
     }
 
@@ -216,29 +232,22 @@ public class LibraryController {
 
     // Метод для отображения результатов поиска
     private void displaySearchResult(Book book) {
-        // Скрыть GridPane с популярными книгами
-        booksGrid.setVisible(false);
-        booksGrid.setManaged(false);
-
-        // Показать VBox с результатами поиска
-        searchResultsBox.setVisible(true);
-        searchResultsBox.setManaged(true);
-
-        // Очистить старые результаты
         searchResultsBox.getChildren().clear();
 
-        // Создаем элементы для отображения результатов
-        Label nameLabel = new Label("Название: " + book.getName());
-        nameLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        Label titleLabel = new Label("Название: " + book.getName());
+        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
         Label authorLabel = new Label("Автор: " + book.getAuthor());
         authorLabel.setStyle("-fx-font-size: 16px;");
 
-        // Добавляем обработчик клика
-        nameLabel.setOnMouseClicked(event -> openBookDetailsPage(book));
+        VBox bookDetailsBox = new VBox(titleLabel, authorLabel);
 
-        // Добавляем элементы в VBox
-        searchResultsBox.getChildren().addAll(nameLabel, authorLabel);
+        // Добавляем обработчик клика
+        bookDetailsBox.setOnMouseClicked(event -> openBookDetailsPage(book));
+
+        searchResultsBox.getChildren().add(bookDetailsBox);
+        searchResultsBox.setVisible(true);
+        searchResultsBox.setManaged(true);
     }
 
     private void openBookDetailsPage(Book book) {
@@ -266,11 +275,9 @@ public class LibraryController {
 
 
     private void displayDefaultContent() {
-        // Включаем видимость GridPane
-        booksContainer.setVisible(true);
-
-        // Если нужно, можете добавить код для очистки и перезагрузки данных
-        // например, booksContainer.getChildren().clear();
-        // и последующего заполнения элементами.
+        booksGrid.setVisible(true);
+        booksGrid.setManaged(true);
+        searchResultsBox.setVisible(false);
+        searchResultsBox.setManaged(false);
     }
 }

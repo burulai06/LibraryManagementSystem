@@ -17,6 +17,7 @@ public class BookDetailsController1 {
 
     private Stage previousStage;
 
+
     // Устанавливаем данные о книге
     public void setBookDetails(String title, String author, String description) {
         bookTitleLabel.setText("Название: " + title);
