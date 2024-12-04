@@ -23,6 +23,9 @@ import java.sql.SQLException;
 public class LibraryController {
 
     @FXML
+    private GridPane booksContainer;
+
+    @FXML
     private ImageView bannerImageView;
 
     @FXML
@@ -72,6 +75,7 @@ public class LibraryController {
     @FXML
     public void initialize() {
         categoryChoiceBox.setStyle("-fx-font-size: 16px; -fx-text-fill: white;");
+
         // Добавляем категории
         categoryChoiceBox.getItems().addAll("Romance novel", "Fantasy", "Adventure fiction", "Horror");
 
@@ -87,6 +91,18 @@ public class LibraryController {
 
         // Обработка нажатия Enter в поле поиска
         searchField.setOnAction(event -> onSearch());
+
+        // Слушатель изменений в поле поиска
+        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue.isEmpty()) {
+                // Если поле поиска пустое, восстанавливаем GridPane
+                displayDefaultContent();
+            } else {
+                // Если идет ввод, выполняем поиск
+                booksContainer.setVisible(false); // Скрываем GridPane
+                onSearch(); // Запускаем поиск
+            }
+        });
     }
 
     private void switchToCategoryPage(String category) {
@@ -211,22 +227,50 @@ public class LibraryController {
         // Очистить старые результаты
         searchResultsBox.getChildren().clear();
 
-        // Добавить результаты поиска
+        // Создаем элементы для отображения результатов
         Label nameLabel = new Label("Название: " + book.getName());
         nameLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
         Label authorLabel = new Label("Автор: " + book.getAuthor());
         authorLabel.setStyle("-fx-font-size: 16px;");
 
-        searchResultsBox.getChildren().addAll(nameLabel, authorLabel); // Добавление в VBox
+        // Добавляем обработчик клика
+        nameLabel.setOnMouseClicked(event -> openBookDetailsPage(book));
+
+        // Добавляем элементы в VBox
+        searchResultsBox.getChildren().addAll(nameLabel, authorLabel);
     }
 
+    private void openBookDetailsPage(Book book) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/example/librarymanagementsystem/view/BookDetails.fxml"));
+            Stage stage = new Stage();
+            stage.setScene(new Scene(loader.load()));
+
+            // Получаем контроллер новой страницы
+            BookDetailsController1 controller = loader.getController();
+            controller.setBookDetails(book.getName(), book.getAuthor(), "Здесь будет описание книги.");
+
+            // Передаем текущую сцену как предыдущую
+            controller.setPreviousStage((Stage) searchResultsBox.getScene().getWindow());
+
+            // Показываем новую сцену
+            stage.show();
+
+            // Скрываем текущую сцену (не закрываем)
+            searchResultsBox.getScene().getWindow().hide();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
     private void displayDefaultContent() {
-        // Реализация возврата к содержимому по умолчанию
-        contentBox.getChildren().clear();
-        Label defaultLabel = new Label("Популярное сейчас");
-        defaultLabel.setStyle("-fx-font-size: 18px;");
-        contentBox.getChildren().add(defaultLabel);
-        // Можно добавить логику отображения книг
+        // Включаем видимость GridPane
+        booksContainer.setVisible(true);
+
+        // Если нужно, можете добавить код для очистки и перезагрузки данных
+        // например, booksContainer.getChildren().clear();
+        // и последующего заполнения элементами.
     }
 }
