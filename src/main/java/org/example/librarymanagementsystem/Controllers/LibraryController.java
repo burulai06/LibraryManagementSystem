@@ -162,6 +162,8 @@ public class LibraryController {
     // Метод поиска
     private void onSearch() {
         String query = searchField.getText().trim();
+
+        // Если поле пустое, показываем дефолтное содержимое
         if (query.isEmpty()) {
             System.out.println("Поле поиска пустое. Показать дефолтное содержимое.");
             displayDefaultContent();
@@ -171,20 +173,25 @@ public class LibraryController {
         System.out.println("Выполняется поиск книги с запросом: " + query);
 
         try {
+            // Выполняем поиск книги
             Book result = bookDAO.searchBookByName(query);
+
             if (result != null) {
                 System.out.println("Книга найдена: " + result.getName());
-                booksGrid.setVisible(false); // Скрываем GridPane с популярными книгами
-                displaySearchResult(result); // Показываем результаты поиска
+                // Скрываем популярное только если нашли результат
+                booksGrid.setVisible(false);
+                displaySearchResult(result);
             } else {
                 System.out.println("Книга не найдена.");
-                booksGrid.setVisible(false);
-                displayNoResult(); // Показываем сообщение "Книга не найдена"
+                // Только если книги нет — скрываем популярное
+                booksGrid.setVisible(true);
+                displayNoResult();
             }
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Ошибка при выполнении поиска: " + e.getMessage());
         }
+
     }
 
     private void displayNoResult() {
@@ -272,7 +279,6 @@ public class LibraryController {
             e.printStackTrace();
         }
     }
-
 
     private void displayDefaultContent() {
         booksGrid.setVisible(true);
